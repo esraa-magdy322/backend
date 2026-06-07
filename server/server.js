@@ -16,6 +16,8 @@ app.use(express.urlencoded({ extended: false }))
 app.use('/api', require('../routes/goalRoutes'))
 app.use(handleError)
 
-app.listen(port, () => console.log(`Server started on port ${port}`.cyan.bold))
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  app.listen(port, () => console.log(`Server started on port ${port}`.cyan.bold))
+}
 
 module.exports = app;
