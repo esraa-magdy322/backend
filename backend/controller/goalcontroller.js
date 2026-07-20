@@ -89,6 +89,7 @@ const loginUser = asyncHandler(async (req, res, next) => {
         message: "Login success",
         token: generateToken(user._id),
         role: user.role,
+        fullName: user.fullName,
     });
 });
 const generateToken = (id) => {

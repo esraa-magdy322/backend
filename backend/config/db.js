@@ -4,28 +4,44 @@ const User = require('../Model/userModel');
 
 const connectDB = async () => {
     try {
+
+        const dns = require('dns');
+        dns.setServers(['8.8.8.8', '8.8.4.4']);
+
         const connect = await mongoose.connect(process.env.MONGO_URL);
 
-        const admin = await User.findOne({
+        let admin = await User.findOne({
             email: "admin@gmail.com"
         });
 
+        const hashedPassword = await bcrypt.hash("123456", 10);
+
         if (!admin) {
-            const hashedPassword = await bcrypt.hash("123456", 10);
             await User.create({
-                fullName: "Admin",
+                fullName: "Super Admin",
                 email: "admin@gmail.com",
+                phone: "+1234567890",
                 password: hashedPassword,
-                role: "admin"
+                role: "superadmin",
+                isActive: true,
             });
-            console.log("Admin created");
+            console.log("Super Admin created");
+        } else {
+            admin.role = 'superadmin';
+            admin.isActive = true;
+            admin.password = hashedPassword;
+            if (!admin.phone) admin.phone = "+1234567890";
+            await admin.save();
+            console.log("Super Admin account corrected");
         }
 
         console.log(`MongoDB Connected: ${connect.connection.host}`);
+
     } catch (error) {
-        console.error("MongoDB Connection Error: ", error.message);
-        // Do not process.exit in serverless environment
-        throw error;
+
+        console.error(error.message);
+        process.exit(1);
+
     }
 };
 

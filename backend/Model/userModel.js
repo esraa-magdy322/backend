@@ -4,30 +4,50 @@ const userSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
-      required: [true, 'please add a FullName Value']
+      required: [true, 'Please add a full name'],
+      trim: true,
     },
-    email:{
-        type:String,
-        required:[true,'please add an email value'],
-        unique: true
+    email: {
+      type: String,
+      required: [true, 'Please add an email address'],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
     },
-    CompanyName:{
-        type:String
+    phone: {
+      type: String,
+      required: [true, 'Please add a phone number'],
+      trim: true,
     },
-    role:{
-      type:String,
-      required:[true,'please add the role'],
-      enum: ['HR Manager', 'Manager', 'Employee',"admin"],
-
-    },
-    
     password: {
       type: String,
-      required: [true, 'please add a password']
-    }
+      required: [true, 'Please add a password'],
+      select: false,
+    },
+    role: {
+      type: String,
+      required: true,
+      enum: ['superadmin', 'company_admin'],
+      default: 'company_admin',
+      trim: true,
+      lowercase: true,
+    },
+    roleRef: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Role',
+    },
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Company',
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
