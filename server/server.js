@@ -48,7 +48,7 @@ app.use('/api/payroll', require('../routes/payrollRoutes'))
 app.use('/odoo', require('../routes/odooRoutes'))        // ← Odoo 19 companies
 app.use(handleError)
 
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && require.main === module) {
   app.listen(port, () => console.log(`Server started on port ${port}`.cyan.bold))
 }
 
