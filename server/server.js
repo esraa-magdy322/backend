@@ -1,16 +1,15 @@
 const express = require('express')
-const dotenv = require('dotenv').config({ path: '../.env' })
+const path = require('path')
+const dotenv = require('dotenv')
+dotenv.config({ path: path.join(__dirname, '../.env') })
 const port = process.env.PORT || 5000
 const { handleError } = require('../backend/middlewares/errorHandler')
 const colors = require('colors')
 const connectDB = require('../backend/config/db')
 const cors = require('cors');
 
-connectDB()
-const { startCronJobs } = require('../backend/utils/cronJobs');
-startCronJobs();
-
 const app = express()
+
 app.use(cors({
   origin: process.env.FRONTEND_ORIGIN || '*',
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
@@ -18,6 +17,26 @@ app.use(cors({
 }));
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
+
+// Middleware to ensure DB connection per request in serverless environment
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (dbErr) {
+    console.error('[DB Middleware Error]:', dbErr.message);
+  }
+  next();
+});
+
+// Start cron jobs only in standard node environments (not Vercel)
+if (!process.env.VERCEL) {
+  try {
+    const { startCronJobs } = require('../backend/utils/cronJobs');
+    startCronJobs();
+  } catch (cronErr) {
+    console.warn('[Cron Warning]:', cronErr.message);
+  }
+}
 
 app.use('/api', require('../routes/goalRoutes'))
 app.use('/api/auth', require('../routes/authRoutes'))
@@ -27,9 +46,9 @@ app.use('/api/subscriptions', require('../routes/subscriptionRoutes'))
 app.use('/api/payments', require('../routes/paymentRoutes'))
 app.use('/api/payroll', require('../routes/payrollRoutes'))
 app.use('/odoo', require('../routes/odooRoutes'))        // ← Odoo 19 companies
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-  app.listen(port, () => console.log(`Server started on port ${port}`.cyan.bold))
-} else if (!process.env.VERCEL) {
+app.use(handleError)
+
+if (!process.env.VERCEL) {
   app.listen(port, () => console.log(`Server started on port ${port}`.cyan.bold))
 }
 
