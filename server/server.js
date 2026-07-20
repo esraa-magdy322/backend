@@ -22,10 +22,11 @@ app.use(express.urlencoded({ extended: false }))
 app.use(async (req, res, next) => {
   try {
     await connectDB();
+    next();
   } catch (dbErr) {
     console.error('[DB Middleware Error]:', dbErr.message);
+    res.status(500).json({ error: 'Database connection failed: ' + dbErr.message });
   }
-  next();
 });
 
 // Start cron jobs only in standard node environments (not Vercel)
@@ -37,6 +38,10 @@ if (!process.env.VERCEL) {
     console.warn('[Cron Warning]:', cronErr.message);
   }
 }
+
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'OK', message: 'Server is running successfully' });
+});
 
 app.use('/api', require('../routes/goalRoutes'))
 app.use('/api/auth', require('../routes/authRoutes'))

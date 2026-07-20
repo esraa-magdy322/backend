@@ -10,20 +10,24 @@ const connectDB = async () => {
     }
 
     try {
-        try {
-            const dns = require('dns');
-            dns.setServers(['8.8.8.8', '8.8.4.4']);
-        } catch (dnsErr) {
-            console.warn("[DB] Custom DNS setServers warning:", dnsErr.message);
+        if (!process.env.VERCEL) {
+            try {
+                const dns = require('dns');
+                dns.setServers(['8.8.8.8', '8.8.4.4']);
+            } catch (dnsErr) {
+                console.warn("[DB] Custom DNS setServers warning:", dnsErr.message);
+            }
         }
 
         const mongoUrl = process.env.MONGO_URL || process.env.MONGO_URI;
         if (!mongoUrl) {
             console.error("[DB] MONGO_URL or MONGO_URI missing in environment variables.");
-            return;
+            throw new Error("MONGO_URL missing in environment variables");
         }
 
-        const connect = await mongoose.connect(mongoUrl);
+        const connect = await mongoose.connect(mongoUrl, {
+            serverSelectionTimeoutMS: 8000,
+        });
         isConnected = true;
         console.log(`MongoDB Connected: ${connect.connection.host}`);
 
@@ -54,7 +58,7 @@ const connectDB = async () => {
 
     } catch (error) {
         console.error("[DB Error]:", error.message);
-        // Do not call process.exit(1) in serverless environments
+        throw error;
     }
 };
 
